@@ -1,0 +1,108 @@
+---
+argument_specs:
+  main:
+    short_description: Create and delete AWS EC2 instance
+    description: >
+      - Createx security group, keypair, and EC2 instance, and populate Ansible inventory file
+      - Delete EC2 instances, keypair, security group
+    author: mamono210
+    options:
+
+      image:
+        description: AMI ID. Required when resource_state=present, and image-name and image-owner is not set.
+        type: str
+
+      image_name:
+        description: AMI name. Required when resource_state=present, and image is not set. If more than one AMI is applicable, the AMI with the most recent creation date will be applied.
+        type: str
+
+      image_owner:
+        description: AMI owner id. Required when resource_state=present, and image-name and ami_owner_id is not set.
+        type: str
+
+      instance_type:
+        description: EC2 instance type
+        type: str
+
+      keypair_name:
+        description: EC2 key pair name. A key name is up to 255 ASCII characters. Molecule would create and delete the key pair each time it is executed.
+        type: str
+
+      keypair_path:
+        description: The path where the created key pair will be saved.
+        type: str
+
+      resource_state:
+        choices:
+          - present
+          - absent
+        description: If the value is 'present', EC2 instances, security group, and keypair would be created, and if the value is 'absent', these exisiting resources would be deleted.
+        type: str
+
+      security_group_name:
+        description: Security group to use with the instance.
+        type: str
+
+      security_group_rules:
+        description: List of firewall inbound rules to enforce in the security group.
+        type: list
+        options:
+          proto:
+            description: The IP protocol name (tcp, udp, icmp, icmpv6) or number. (https://en.wikipedia.org/wiki/List_of_IP_protocol_numbers)
+            required: yes
+            type: str
+            options:
+              cidr_ip:
+                description: The IPv4 CIDR range traffic is coming from.
+                type: str
+              from_port:
+                description: The start of the range of ports that traffic is coming from. A value of -1 indicates all ports.
+                type: int
+              to_port:
+                description: The end of the range of ports that traffic is coming from. A value of -1 indicates all ports.
+                type: int
+
+      security_group_rules_egress:
+        type: list
+        description: List of firewall outbound rules to enforce in the security group.
+        options:
+          proto:
+            description: IP protocol settings. A value of -1 indicates all protocol. (https://en.wikipedia.org/wiki/List_of_IP_protocol_numbers)
+            required: yes
+            type: str
+            options:
+              cidr_ip:
+                description: The IPv4 CIDR range traffic is going to.
+                type: str
+              from_port:
+                description: The start of the range of ports that traffic is going to. A value of -1 indicates all ports.
+                type: int
+              to_port:
+                description: The end of the range of ports that traffic is going to. A value of -1 indicates all ports.
+                type: int
+
+      ssh_port:
+        default: 22
+        description: SSH port number for molcule to connect to the instance.
+        type: int
+
+      ssh_user:
+        description: SSH user name for molcule to connect to the instance.
+        type: str
+
+      tag_created_by:
+        description: The value of 'created_by' tag, assumed that the name or email address of the creator of the resources will be set.
+        type: str
+
+      tag_name:
+        description: The value of 'Name' tag of AWS resources; EC2 instances, security group, keypair
+        type: str
+
+      volume_size:
+        default: 10
+        description: Size of the volume to be attached to the instance(in GiB).
+        type: int
+
+      vpc_subnet_id:
+        description: The subnet ID in which to launch the instance (VPC). VPC must be created in advance.
+        type: str

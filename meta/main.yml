@@ -1,0 +1,14 @@
+---
+galaxy_info:
+  role_name: user
+  author: tomonorimatsumura
+  description: Add Linux user to the system
+  company: no name
+  license: "license (BSD, MIT)"
+  min_ansible_version: 3.0
+  platforms:
+    - name: EL
+      versions:
+        - 7
+  galaxy_tags: []
+dependencies: []

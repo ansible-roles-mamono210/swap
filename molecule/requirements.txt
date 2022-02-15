@@ -1,0 +1,6 @@
+ansible
+boto
+boto3
+docker
+molecule
+molecule-ec2

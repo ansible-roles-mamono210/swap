@@ -1,0 +1,28 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: ec2
+platforms:
+  - name: instance
+    image: ami-00f65b9dfc6773444
+    instance_type: t2.micro
+    keypair_name: ${KEYPAIR_NAME}
+    security_group_name: ${SECURITY_GROUP_NAME}
+    tag_name: ${TAG_NAME}
+    tag_created_by: ${CREATED_BY}
+    volume_size: 20
+    vpc_subnet_id: ${VPC_SUBNET_ID}
+provisioner:
+  name: ansible
+  config_options:
+    defaults:
+      callback_enabled: ansible.posix.profile_tasks
+verifier:
+  name: ansible
+scenario:
+  test_sequence:
+    - dependency
+    - syntax
+    - converge
+    - destroy
