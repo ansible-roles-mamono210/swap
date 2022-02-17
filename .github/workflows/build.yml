@@ -43,7 +43,7 @@ jobs:
           | GREP_COLORS='mt=01;33' egrep --color=always 'detect-secrets.* '
 
   vm-centos7:
-    uses: github-actions-reusable-workflows/molecule-ec2/.github/workflows/workflows.yml@main
+    uses: github-actions-reusable-workflows/molecule-ec2/.github/workflows/workflows.yml@2410
     with:
       ami-name: centos7-1*
       molecule-instance-type: t2.small
@@ -58,7 +58,7 @@ jobs:
       VPC_SUBNET_ID: ${{ secrets.VPC_SUBNET_ID }}
 
   vm-centos-stream8:
-    uses: github-actions-reusable-workflows/molecule-ec2/.github/workflows/workflows.yml@main
+    uses: github-actions-reusable-workflows/molecule-ec2/.github/workflows/workflows.yml@2410
     with:
       ami-name: centos-stream8-*
       molecule-instance-type: t4g.small
