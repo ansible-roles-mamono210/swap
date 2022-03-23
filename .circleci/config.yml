@@ -177,15 +177,10 @@ workflows:
     jobs:
       - trailing-whitespace
       - yamllint:
-          requires:
-            - trailing-whitespace
+          requires: trailing-whitespace
       - ansible-lint:
-          requires:
-            - yamllint
+          requires: yamllint
       - molecule:
           context: aws-credentials
-          parameters:
-            tag-name:
-              - 'molecule_swap'
-          requires:
-            - ansible-lint
+          tag-name: molecule_swap
+          requires: ansible-lint
