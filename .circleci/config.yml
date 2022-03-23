@@ -99,9 +99,10 @@ jobs:
             echo "export AMI_NAME=<< parameters.molecule-ami-name >>-*" >> $BASH_ENV
             source $BASH_ENV
       - run:
-          name: Install required Ansible Collections and roles
+          name: Install required Ansible Collections and the role
           command: |
             ansible-galaxy collection install community.molecule
+            ansible-galaxy install git+${CIRCLE_REPOSITORY_URL},${CIRCLE_SHA1}
       - run:
           name: Test with molecule
           command: |

@@ -2,8 +2,5 @@
 - name: Converge
   hosts: all
   become: true
-
-  tasks:
-    - name: Execute
-      ansible.builtin.include_role:
-        name: swap
+  roles:
+    - swap
