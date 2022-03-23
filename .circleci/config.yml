@@ -6,11 +6,7 @@ executors:
     docker:
       - image: ghcr.io/docker-hub-tm/circleci-executors/ansible-lint:latest
     resource_class: small
-  molecule-docker:
-    machine:
-      image: ubuntu-2004:202111-02
-    resource_class: medium
-  molecule-ec2:
+  molecule:
     docker:
       - image: ghcr.io/docker-hub-tm/circleci-executors_molecule/molecule:ec2
     resource_class: small
