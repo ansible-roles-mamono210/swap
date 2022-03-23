@@ -25,14 +25,6 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install galaxy roles
-          command: |
-            if [ -f 'roles/requirements.yml' ]; then
-              ansible-galaxy install -r roles/requirements.yml
-            else
-              ansible-galaxy install git+${CIRCLE_REPOSITORY_URL},${CIRCLE_SHA1}
-            fi
-      - run:
           name: Execulte Ansible-lint
           command: ansible-lint
       - run:
