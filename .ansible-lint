@@ -1,7 +1,6 @@
 ---
-exclude_paths:
-  - molecule/group_test/prepare.yml
 parseable: true
-skip_list:
-  - 'no-handler'
-  - 'role-name'
+warn_list:
+  - no-changed-when
+  - no-handler
+  - role-name
