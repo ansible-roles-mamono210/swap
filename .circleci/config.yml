@@ -25,6 +25,10 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Install galaxy roles
+          command: |
+            ansible-galaxy install git+${CIRCLE_REPOSITORY_URL},${CIRCLE_SHA1}
+      - run:
           name: Execulte Ansible-lint
           command: ansible-lint
       - run:
