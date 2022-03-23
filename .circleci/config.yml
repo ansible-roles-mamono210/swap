@@ -185,7 +185,7 @@ workflows:
             - yamllint
       - molecule:
           molecule-ami-name: 'centos-stream8'
-          molecule-instance-type: 't2.micro'
+          molecule-instance-type: 't4g.small'
           molecule-ec2-tag: 'molecule_swap'
           context: aws-credentials
           requires:
