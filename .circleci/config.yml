@@ -1,0 +1,191 @@
+---
+version: 2.1
+
+executors:
+  ansible-lint:
+    docker:
+      - image: ghcr.io/docker-hub-tm/circleci-executors/ansible-lint:latest
+    resource_class: small
+  molecule-docker:
+    machine:
+      image: ubuntu-2004:202111-02
+    resource_class: medium
+  molecule-ec2:
+    docker:
+      - image: ghcr.io/docker-hub-tm/circleci-executors_molecule/molecule:ec2
+    resource_class: small
+  yamllint:
+    docker:
+      - image: ghcr.io/docker-hub-tm/circleci-executors/yamllint:latest
+    resource_class: small
+  trailing-whitespace:
+    docker:
+      - image: ghcr.io/docker-hub-tm/circleci-executors/trailing-whitespace:latest
+    resource_class: small
+
+jobs:
+  ansible-lint:
+    executor: ansible-lint
+    steps:
+      - checkout
+      - run:
+          name: Install galaxy roles
+          command: |
+            if [ -f 'roles/requirements.yml' ]; then
+              ansible-galaxy install -r roles/requirements.yml
+            else
+              ansible-galaxy install git+${CIRCLE_REPOSITORY_URL},${CIRCLE_SHA1}
+            fi
+      - run:
+          name: Execulte Ansible-lint
+          command: ansible-lint
+      - run:
+          name: Show Ansible-lint version
+          command: |
+            pip list | grep ansible \
+            | GREP_COLORS='mt=01;34' egrep --color=always '[[:digit:]]' \
+            | GREP_COLORS='mt=01;34' egrep --color=always '\.' \
+            | GREP_COLORS='mt=01;33' egrep --color=always 'ansible.* '
+            ansible-lint --version
+  molecule:
+    executor: molecule
+    parameters:
+      scenario-name:
+        default: "default"
+        type: string
+      tag-name:
+        type: string
+    working_directory: ~/molecule_test_ec2
+    steps:
+      - checkout
+      - run:
+          name: Set environment variable with timestamp for making sure Molecule would create unique AWS resources
+          command: |
+            TIMESTAMP=$(date --date "9 hours" "+%Y%m%d_%H%M%S")
+            VALUE="<< parameters.tag-name >>_<< parameters.scenario-name >>"
+            AWSIAM_USER="${VALUE}_${TIMESTAMP}"
+            AWSIAM_POLICY_NAME="${VALUE}_${TIMESTAMP}"
+            echo "export AWSIAM_USER=$AWSIAM_USER" >> $BASH_ENV
+            echo "export AWSIAM_POLICY_NAME=$AWSIAM_POLICY_NAME" >> $BASH_ENV
+            source $BASH_ENV
+      - run:
+          name: Create AWS Access Key
+          command: |
+            molecule dependency --scenario-name awsiam
+            molecule converge --scenario-name awsiam
+          environment:
+            ANSIBLE_FORCE_COLOR: 1
+            # AWS_ACCESS_KEY_ID_1: sotred in CircleCI environment variables
+            # AWS_DEFAULT_REGION: sotred in CircleCI environment variables
+            # AWS_SECRET_ACCESS_KEY_1: stored in CircleCI environment variables
+            # AWSIAM_USER: stored in CircleCI environment variables
+            # AWSIAM_POCLIY_NAME: stored in CircleCI environment variables
+            MOLECULE_NO_LOG: True
+            MOLECULE_VERBOSITY: 0
+            PROFILE_TASKS_SORT_ORDER: 'none'
+            PROFILE_TASKS_TASK_OUTPUT_LIMIT: 200
+            PY_COLORS: 1
+            TZ: 'Asia/Tokyo'
+      - run:
+          name: Set timestamp for making sure Molecule would create unique AWS resources
+          command: |
+            TIMESTAMP=$(date --date "9 hours" "+%Y%m%d_%H:%M:%S")
+            VALUE="<< parameters.tag-name>>_<< parameters.scenario-name >>"
+            AUTHOR_EMAIL=$(git show -s --format='%ae' ${CIRCLE_SHA1})
+
+            echo "export CREATED_BY=${AUTHOR_EMAIL}" >> $BASH_ENV
+            echo "export KEYPAIR_NAME=${VALUE}_${TIMESTAMP}" >> $BASH_ENV
+            echo "export PLATFORM_NAME=${VALUE}_${TIMESTAMP}" >> $BASH_ENV
+            echo "export SECURITY_GROUP_NAME=${VALUE}_${TIMESTAMP}" >> $BASH_ENV
+            echo "export TAG_NAME=${VALUE}_${TIMESTAMP}" >> $BASH_ENV
+            source $BASH_ENV
+      - run:
+          name: Install required Ansible Collections and roles
+          command: |
+            ansible-galaxy collection install community.molecule
+      - run:
+          name: Test with molecule
+          command: |
+            molecule test --scenario-name << parameters.scenario-name >>
+          environment:
+            ANSIBLE_FORCE_COLOR: 1
+            # AMI_OWNER_ID: sotred in system environment variables
+            # AWS_DEFAULT_REGION: sotred in CircleCI environment variables
+            # CREATED_BY: stored in CircleCI environment variables
+            # KEYPAIR_NAME: sotred in CircleCI environment variables
+            MOLECULE_NO_LOG: True
+            MOLECULE_VERBOSITY: 0
+            # PLATFORM_NAME: sotred in CircleCI environment variables
+            PROFILE_TASKS_SORT_ORDER: 'none'
+            PROFILE_TASKS_TASK_OUTPUT_LIMIT: 200
+            PY_COLORS: 1
+            # SECURITY_GROUP_NAME: sotred in CircleCI environment variables
+            # VPC_SUBNET_ID: sotred in CircleCI environment variables
+            TZ: 'Asia/Tokyo'
+      - run:
+          name: Delete AWS Access Key
+          command: |
+            molecule cleanup --scenario-name awsiam
+          environment:
+            ANSIBLE_FORCE_COLOR: 1
+            # AWS_ACCESS_KEY_ID_1: sotred in CircleCI environment variables
+            # AWS_DEFAULT_REGION: sotred in CircleCI environment variables
+            # AWS_SECRET_ACCESS_KEY_1: stored in CircleCI environment variables
+            # AWSIAM_USER: stored in CircleCI environment variables
+            # AWSIAM_POCLIY_NAME: stored in CircleCI environment variables
+            MOLECULE_VERBOSITY: 0
+            PROFILE_TASKS_SORT_ORDER: 'none'
+            PROFILE_TASKS_TASK_OUTPUT_LIMIT: 200
+            PY_COLORS: 1
+            TZ: 'Asia/Tokyo'
+      - run:
+          name: Show Ansible version
+          command: |
+            pip list | grep ansible \
+            | GREP_COLORS='mt=01;34' egrep --color=always '[[:digit:]]' \
+            | GREP_COLORS='mt=01;34' egrep --color=always '\.' \
+            | GREP_COLORS='mt=01;33' egrep --color=always 'ansible.* '
+            ansible --version
+      - run:
+          name: Show Molecule version
+          command: molecule --version
+  yamllint:
+    executor: yamllint
+    steps:
+      - checkout
+      - run:
+          name: Execute yamllint
+          command: yamllint *
+      - run:
+          name: Show yamllint version
+          command: |
+            yamllint --version \
+            | GREP_COLORS='mt=01;34' egrep --color=always '[[:digit:]]' \
+            | GREP_COLORS='mt=01;34' egrep --color=always '\.' \
+            | GREP_COLORS='mt=01;33' egrep --color=always 'yamllint.* '
+  trailing-whitespace:
+    executor: trailing-whitespace
+    steps:
+      - checkout
+      - run:
+          name: Execute trailing-whitespace
+          command: trailing-whitespace
+
+workflows:
+  version: 2.1
+  build:
+    jobs:
+      - trailing-whitespace
+      - yamllint:
+          requires:
+            - trailing-whitespace
+      - ansible-lint:
+          requires:
+            - yamllint
+      - molecule:
+          context: aws-credentials
+          parameters:
+            tag-name:
+              - 'molecule_swap'
+          requires:
+            - ansible-lint
